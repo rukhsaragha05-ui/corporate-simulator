@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Corporate Chaos Simulator - Upgraded</title>
+<script src="scores.js"></script>
+<style>
+    body {
+        font-family: 'Arial', sans-serif;
+        text-align: center;
+        background: #0f172a;
+        color: white;
+        overflow-x: hidden;
+    }
+
+    .container {
+        margin-top: 50px;
+        transition: all 0.5s ease;
+    }
+
+    button {
+        padding: 12px 25px;
+        margin: 10px;
+        font-size: 16px;
+        cursor: pointer;
+        background-color: #1e293b;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        transition: 0.3s;
+    }
+
+    button:hover {
+        background-color: #2563eb;
+    }
+
+    input, select {
+        padding: 8px;
+        margin: 5px;
+        border-radius: 5px;
+        border: none;
+        font-size: 16px;
+    }
+
+    .hidden { display: none; }
+
+    .option {
+        display: block;
+        margin: 10px auto;
+        padding: 12px;
+        background: #1e293b;
+        border-radius: 5px;
+        cursor: pointer;
+        width: 60%;
+        transition: 0.3s;
+    }
+
+    .option:hover {
+        background: #2563eb;
+    }
+
+    .timer-bar {
+        height: 20px;
+        width: 100%;
+        background: #1e293b;
+        margin: 20px 0;
+        border-radius: 10px;
+        overflow: hidden;
+    }
+
+    .timer-progress {
+        height: 100%;
+        background: yellow;
+        width: 100%;
+        transition: width 1s linear;
+    }
+
+    .feedback {
+        margin-top: 20px;
+        font-size: 18px;
+        color: #facc15;
+        min-height: 50px;
+    }
+
+    .motivational {
+        margin-top: 30px;
+        font-size: 20px;
+        color: #34d399;
+    }
+</style>
+</head>
+<body>
+
+<div class="container" id="startScreen">
+    <h1>🏢 Corporate Chaos Simulator</h1>
+    <input id="teamName" placeholder="Enter Team Name"><br>
+    <button onclick="nextToMembers()">Let's Play</button>
+</div>
+
+<div class="container hidden" id="memberScreen">
+    <h2>How many members?</h2>
+    <select id="memberCount">
+        <option>1</option>
+        <option>2</option>
+        <option>3</option>
+        <option>4</option>
+    </select><br>
+    <button onclick="createInputs()">Next</button>
+</div>
+
+<div class="container hidden" id="nameScreen">
+    <h2>Enter Member Names</h2>
+    <div id="nameInputs"></div>
+    <button onclick="selectDept()">Next</button>
+</div>
+
+<div class="container hidden" id="deptScreen">
+    <h2>Select Department</h2>
+    <select id="dept">
+        <option>HR</option>
+        <option>Marketing</option>
+        <option>Finance</option>
+        <option>Operations</option>
+    </select><br>
+    <button onclick="startGame()">Start Game</button>
+</div>
+
+<div class="container hidden" id="gameScreen">
+    <h2 id="teamDisplay"></h2>
+    <h2 id="question"></h2>
+    <div id="options"></div>
+    <div class="timer-bar"><div class="timer-progress" id="timerBar"></div></div>
+    <div class="feedback" id="feedback"></div>
+</div>
+
+<div class="container hidden" id="resultScreen">
+    <h1>🏁 Game Over</h1>
+    <h2 id="scoreDisplay"></h2>
+    <div class="motivational" id="motivationalQuote"></div>
+    <input id="sendTeamName" placeholder="Enter Team Name to Submit Score"><br>
+    <button onclick="submitScore()">Send Score to Leaderboard</button>
+</div>
+
+<script>
+let score = 0;
+let currentQ = 0;
+let timer;
+let timeLeft = 20; // Increased to 20 seconds
+const maxTime = 20; // Maximum time tracker for the bar math
+
+// Motivational quotes
+const quotes = [
+    "Great teamwork drives success!",
+    "Ethics and integrity are your greatest assets.",
+    "Continuous learning leads to growth.",
+    "Your professional skills shape your future!",
+    "Collaboration + Integrity = Corporate Success!"
+];
+
+// Questions with ethical/professional feedback (Upgraded to 10 Questions)
+const questions = [
+    {
+        q: "An employee sent an unprofessional email.",
+        options: ["Ignore it", "Employee apologize professionally", "Blame others"],
+        correct: 1,
+        feedback: "Apologizing professionally maintains trust and reputation."
+    },
+    {
+        q: "Project deadline is tomorrow but incomplete.",
+        options: ["Submit anyway", "Ask extension", "Work overnight"],
+        correct: 1,
+        feedback: "Asking for an extension is professional and shows responsibility."
+    },
+    {
+        q: "Boss asks to hide negative data.",
+        options: ["Agree", "Refuse ethically", "Stay silent"],
+        correct: 1,
+        feedback: "Refusing to hide data preserves integrity and corporate ethics."
+    },
+    {
+        q: "Team conflict arises.",
+        options: ["Ignore", "Mediate discussion", "Take sides"],
+        correct: 1,
+        feedback: "Mediating helps maintain harmony and professionalism."
+    },
+    {
+        q: "Client is unhappy.",
+        options: ["Argue", "Listen and resolve", "Ignore"],
+        correct: 1,
+        feedback: "Listening and resolving shows customer focus and professionalism."
+    },
+    {
+        q: "You want to expand your corporate network on LinkedIn.",
+        options: ["Send cold invites with no context", "Add a personalized note explaining your professional mutual interests", "Spam messages asking for a job immediately"],
+        correct: 1,
+        feedback: "Personalized communication respects professionals and builds meaningful corporate rapport."
+    },
+    {
+        q: "During a presentation, your slides completely crash due to a technical glitch.",
+        options: ["Panic and postpone the meeting", "Blame the IT department aggressively", "Stay calm and deliver your key ideas clearly using your notes"],
+        correct: 2,
+        feedback: "Adaptability and executive presence under pressure are critical leadership traits."
+    },
+    {
+        q: "A team member constantly dominates conversations and interrupts others during meetings.",
+        options: ["Insult them publicly", "Establish clear speaking turn guidelines for the team", "Stay quiet and check out of the project"],
+        correct: 1,
+        feedback: "Setting collaborative boundaries fosters psychological safety and balanced participation."
+    },
+    {
+        q: "You receive intense constructive feedback from your manager regarding your communication style.",
+        options: ["Get defensive and point out their flaws", "Listen actively, take notes, and plan clear adjustments", "Nod along but change absolutely nothing"],
+        correct: 1,
+        feedback: "An open attitude toward constructive criticism is vital for fast-paced professional development."
+    },
+    {
+        q: "Your workload is full, and your manager asks you to take on an urgent, non-critical task.",
+        options: ["Say yes immediately and burn yourself out", "Refuse flatly and walk away", "Politely explain your current capacity and discuss priority timelines"],
+        correct: 2,
+        feedback: "Assertive time management and clear alignment with leadership ensure consistent project quality."
+    }
+];
+
+function nextToMembers() {
+   document.getElementById("startScreen").classList.add("hidden");
+   document.getElementById("memberScreen").classList.remove("hidden");
+}
+
+function createInputs() {
+    let count = document.getElementById("memberCount").value;
+    let container = document.getElementById("nameInputs");
+    container.innerHTML = "";
+    for (let i=0; i<count; i++) {
+        container.innerHTML += `<input placeholder="Member ${i+1}"><br>`;
+    }
+   document.getElementById("memberScreen").classList.add("hidden");
+   document.getElementById("nameScreen").classList.remove("hidden");
+}
+
+function selectDept() {
+   document.getElementById("nameScreen").classList.add("hidden");
+   document.getElementById("deptScreen").classList.remove("hidden");
+}
+
+function startGame() {
+   document.getElementById("deptScreen").classList.add("hidden");
+   document.getElementById("gameScreen").classList.remove("hidden");
+   document.getElementById("teamDisplay").innerText = "Team: " + document.getElementById("teamName").value;
+   loadQuestion();
+}
+
+function loadQuestion() {
+    if(currentQ >= questions.length) {
+        endGame();
+        return;
+    }
+    let q = questions[currentQ];
+    document.getElementById("question").innerText = q.q;
+    document.getElementById("feedback").innerText = "";
+    let optionsHTML = "";
+    q.options.forEach((opt,index)=>{
+        optionsHTML += `<button class="option" onclick="checkAnswer(${index})">${opt}</button>`;
+    });
+    document.getElementById("options").innerHTML = optionsHTML;
+    startTimer();
+}
+
+function startTimer() {
+    timeLeft = maxTime;
+    document.getElementById("timerBar").style.width = "100%";
+    timer = setInterval(()=>{
+        timeLeft--;
+        document.getElementById("timerBar").style.width = (timeLeft/maxTime*100)+"%";
+        if(timeLeft<=0){
+            clearInterval(timer);
+            showFeedback(-1); // timeout
+        }
+    },1000);
+}
+
+function checkAnswer(index){
+    clearInterval(timer);
+    showFeedback(index);
+}
+
+function showFeedback(index){
+    let q = questions[currentQ];
+    if(index === q.correct){
+        score += 10;
+        document.getElementById("feedback").innerText = "✅ Correct! " + q.feedback;
+    } else if (index === -1) {
+        document.getElementById("feedback").innerText = "⏰ Time's Up! " + q.feedback;
+    } else {
+        document.getElementById("feedback").innerText = "❌ Incorrect. " + q.feedback;
+    }
+    // Wait 5 seconds before next question so players can read the educational feedback
+    currentQ++;
+    setTimeout(loadQuestion,5000);
+}
+
+function endGame(){
+   document.getElementById("gameScreen").classList.add("hidden");
+   document.getElementById("resultScreen").classList.remove("hidden");
+   document.getElementById("scoreDisplay").innerText = "Congratulations, " + document.getElementById("teamName").value + "! Your Score: "+score;
+   let quote = quotes[Math.floor(Math.random()*quotes.length)];
+   document.getElementById("motivationalQuote").innerText = quote;
+   document.getElementById("sendTeamName").value = document.getElementById("teamName").value;
+}
+
+function submitScore(){
+    let teamName = document.getElementById("sendTeamName").value.trim();
+    if(teamName==="") { alert("Enter team name"); return; }
+    saveScore(teamName,score); // from scores.js
+    alert("Score submitted to leaderboard!");
+}
+</script>
+
+</body>
+</html>

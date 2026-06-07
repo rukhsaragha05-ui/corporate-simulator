@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Corporate Chaos Simulator - Leaderboard</title>
+<script src="scores.js"></script>
+<style>
+body { font-family: Arial; text-align:center; background:#0f172a; color:white; }
+h1 { margin-bottom:20px; }
+table { margin:auto; font-size:20px; border-collapse: collapse; }
+td,th { padding:10px 20px; border:1px solid white; }
+.first { background:gold; color:black; }
+.second { background:silver; color:black; }
+.third { background:#cd7f32; color:black; }
+</style>
+</head>
+<body>
+
+<h1>🏆 Leaderboard</h1>
+<table id="leaderboard">
+<tr><th>Rank</th><th>Team Name</th><th>Score</th></tr>
+</table>
+
+<button onclick="refresh()">Refresh</button>
+<button onclick="clearAll()">Clear All</button>
+
+<script>
+function refresh(){
+    let scores = getScores(); // From scores.js
+    let table = document.getElementById("leaderboard");
+    table.innerHTML='<tr><th>Rank</th><th>Team Name</th><th>Score</th></tr>';
+    scores.forEach((team,index)=>{
+        let cls="";
+        if(index===0) cls="first";
+        else if(index===1) cls="second";
+        else if(index===2) cls="third";
+        table.innerHTML += `<tr class="${cls}"><td>${index+1}</td><td>${team.teamName}</td><td>${team.score}</td></tr>`;
+    });
+}
+
+function clearAll(){
+    clearScores();
+    refresh();
+}
+
+// Auto-refresh every 5 seconds
+setInterval(refresh,5000);
+refresh();
+</script>
+
+</body>
+</html>
