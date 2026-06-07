@@ -12,6 +12,9 @@ td,th { padding:10px 20px; border:1px solid white; }
 .first { background:gold; color:black; }
 .second { background:silver; color:black; }
 .third { background:#cd7f32; color:black; }
+button { padding: 10px 20px; margin: 20px 10px; font-size: 16px; cursor: pointer; border-radius: 5px; border: none; }
+.btn-refresh { background-color: #2563eb; color: white; }
+.btn-clear { background-color: #dc2626; color: white; }
 </style>
 </head>
 <body>
@@ -21,14 +24,24 @@ td,th { padding:10px 20px; border:1px solid white; }
 <tr><th>Rank</th><th>Team Name</th><th>Score</th></tr>
 </table>
 
-<button onclick="refresh()">Refresh</button>
-<button onclick="clearAll()">Clear All</button>
+<button class="btn-refresh" onclick="refresh()">Refresh Now 🔄</button>
+<button class="btn-clear" onclick="clearAll()">Clear All 🗑️</button>
 
 <script>
-function refresh(){
-    let scores = getScores(); // From scores.js
+// Made this function async so it safely grabs the data from the cloud database
+async function refresh(){
+    let scores = [];
+    
+    // Check if our cloud fetch function is ready from scores.js
+    if (typeof fetchScoresFromServer === "function") {
+        scores = await fetchScoresFromServer();
+    } else {
+        scores = getScores(); 
+    }
+
     let table = document.getElementById("leaderboard");
     table.innerHTML='<tr><th>Rank</th><th>Team Name</th><th>Score</th></tr>';
+    
     scores.forEach((team,index)=>{
         let cls="";
         if(index===0) cls="first";
@@ -39,13 +52,17 @@ function refresh(){
 }
 
 function clearAll(){
-    clearScores();
-    refresh();
+    if(confirm("Are you sure you want to reset the global leaderboard data?")) {
+        clearScores(); // Clears both cloud database and local memory
+        refresh();
+    }
 }
 
-// Auto-refresh every 5 seconds
-setInterval(refresh,5000);
+// Initial pull on load
 refresh();
+
+// Auto-refresh from cloud server every 5 seconds dynamically
+setInterval(refresh, 5000);
 </script>
 
 </body>

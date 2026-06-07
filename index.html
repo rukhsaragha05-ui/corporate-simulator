@@ -87,6 +87,19 @@
         font-size: 20px;
         color: #34d399;
     }
+
+    .leaderboard-link {
+        display: inline-block;
+        margin-top: 20px;
+        color: #38bdf8;
+        text-decoration: none;
+        font-size: 16px;
+        font-weight: bold;
+    }
+    
+    .leaderboard-link:hover {
+        text-decoration: underline;
+    }
 </style>
 </head>
 <body>
@@ -139,16 +152,17 @@
     <div class="motivational" id="motivationalQuote"></div>
     <input id="sendTeamName" placeholder="Enter Team Name to Submit Score"><br>
     <button onclick="submitScore()">Send Score to Leaderboard</button>
+    <br>
+    <a class="leaderboard-link" href="leaderboard.html" target="_blank">View Live Leaderboard 📊</a>
 </div>
 
 <script>
 let score = 0;
 let currentQ = 0;
 let timer;
-let timeLeft = 20; // Increased to 20 seconds
-const maxTime = 20; // Maximum time tracker for the bar math
+let timeLeft = 20; 
+const maxTime = 20; 
 
-// Motivational quotes
 const quotes = [
     "Great teamwork drives success!",
     "Ethics and integrity are your greatest assets.",
@@ -157,7 +171,7 @@ const quotes = [
     "Collaboration + Integrity = Corporate Success!"
 ];
 
-// Questions with ethical/professional feedback (Upgraded to 10 Questions)
+// Questions with ethical/professional feedback (Upgraded to 15 Questions)
 const questions = [
     {
         q: "An employee sent an unprofessional email.",
@@ -218,6 +232,36 @@ const questions = [
         options: ["Say yes immediately and burn yourself out", "Refuse flatly and walk away", "Politely explain your current capacity and discuss priority timelines"],
         correct: 2,
         feedback: "Assertive time management and clear alignment with leadership ensure consistent project quality."
+    },
+    {
+        q: "Two team members are arguing repeatedly, slowing down a project. As a team lead, what is the MOST professional first step?",
+        options: ["Report both to higher management immediately", "Separate them permanently from the project", "Facilitate a private discussion to identify root cause"],
+        correct: 2,
+        feedback: "Facilitating a private discussion gets to the root cause of corporate conflict constructively."
+    },
+    {
+        q: "An employee consistently delivers high-quality work but often submits late. What is the BEST managerial response?",
+        options: ["Ignore deadlines since quality is high", "Discuss time management and resource constraints", "Replace the employee due to unreliability"],
+        correct: 1,
+        feedback: "Discussing core limitations allows leadership to resolve organizational blockages productively."
+    },
+    {
+        q: "Your colleague takes credit for your idea in a meeting. What is the MOST appropriate response?",
+        options: ["Confront them aggressively in front of the team", "Stay silent to avoid conflict", "Address it privately and clarify contribution professionally"],
+        correct: 2,
+        feedback: "Handling internal conflicts privately preserves coworker dynamics while retaining individual value."
+    },
+    {
+        q: "You notice a teammate copying small parts of online work without citation. What is the MOST appropriate action?",
+        options: ["Report immediately to HR", "Ignore since it doesn't affect your work", "Privately inform and encourage proper ethical correction"],
+        correct: 2,
+        feedback: "Peer guidance encourages professional accountability and ethical academic or corporate standards."
+    },
+    {
+        q: "A new system is introduced and one senior employee resists it, saying 'old method is better.' What should management do FIRST?",
+        options: ["Force immediate compliance", "Evaluate concerns and provide structured training", "Remove the employee"],
+        correct: 1,
+        feedback: "Providing supportive upskilling bridges resistance during large-scale systemic transitions."
     }
 ];
 
@@ -273,7 +317,7 @@ function startTimer() {
         document.getElementById("timerBar").style.width = (timeLeft/maxTime*100)+"%";
         if(timeLeft<=0){
             clearInterval(timer);
-            showFeedback(-1); // timeout
+            showFeedback(-1); 
         }
     },1000);
 }
@@ -293,7 +337,6 @@ function showFeedback(index){
     } else {
         document.getElementById("feedback").innerText = "❌ Incorrect. " + q.feedback;
     }
-    // Wait 5 seconds before next question so players can read the educational feedback
     currentQ++;
     setTimeout(loadQuestion,5000);
 }
@@ -310,7 +353,7 @@ function endGame(){
 function submitScore(){
     let teamName = document.getElementById("sendTeamName").value.trim();
     if(teamName==="") { alert("Enter team name"); return; }
-    saveScore(teamName,score); // from scores.js
+    saveScore(teamName,score); 
     alert("Score submitted to leaderboard!");
 }
 </script>
