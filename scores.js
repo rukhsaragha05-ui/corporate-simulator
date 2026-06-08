@@ -1,72 +1,79 @@
-// scores.js - Final Unblocked Cloud Sync
+// scores.js - Google Sheets Mobile-Carrier Approved Sync
 
-// A completely open, public text-bin that allows global editing from any network
-const CLOUD_URL = "https://api.rest7.com/v1/text_paste.php?action=get&id=rukhsar_corp_sim_scores_2026";
-const SAVE_URL = "https://api.rest7.com/v1/text_paste.php?action=set&id=rukhsar_corp_sim_scores_2026";
+const FORM_ID = "1FAIpQLSfkFNo7jHj9NmLJFxQqLFBOVHcWf6cjzpx66QThhGB-ZQyifA"; 
+const ENTRY_NAME = "entry.699016978"; 
+const ENTRY_SCORE = "entry.461324448"; 
 
-function getLocalScores() {
+// Your live published Google Sheet CSV link
+const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR_UlL2RTVft7akWtoQeaXkTXyPKlcaryoHOqHp5CuOCydHzFH-aN-FV9MoJMM4PG5ZBFtSVw437p98/pub?output=csv";
+
+function getScores() {
     let scores = localStorage.getItem("teamScores");
     return scores ? JSON.parse(scores) : [];
 }
 
-// 1. Fetches global database rankings
+// Fetches all team submissions directly from the live Google Sheet CSV
 async function fetchScoresFromServer() {
     try {
-        let response = await fetch(CLOUD_URL);
+        let response = await fetch(SHEET_CSV_URL + (SHEET_CSV_URL.includes("?") ? "&" : "?") + "cachebust=" + new Date().getTime());
         if (response.ok) {
-            let text = await response.text();
-            // If the database is brand new and empty, return empty array
-            if (!text || text.trim() === "" || text.includes("error")) return [];
-            let data = JSON.parse(text);
-            return Array.isArray(data) ? data : [];
+            let csvText = await response.text();
+            let lines = csvText.split("\n");
+            let scoresMap = {};
+
+            // Parse lines (Skip row 0 because it contains the spreadsheet headers)
+            for (let i = 1; i < lines.length; i++) {
+                if (!lines[i].trim()) continue;
+                
+                let columns = lines[i].split(",");
+                if (columns.length >= 3) {
+                    let teamName = columns[1].replace(/["']/g, "").trim();
+                    let scoreVal = parseInt(columns[2].replace(/["']/g, "").trim()) || 0;
+                    
+                    if (teamName) {
+                        scoresMap[teamName.toLowerCase()] = {
+                            teamName: teamName,
+                            score: Math.max(scoresMap[teamName.toLowerCase()]?.score || 0, scoreVal)
+                        };
+                    }
+                }
+            }
+            
+            let sortedScores = Object.values(scoresMap);
+            sortedScores.sort((a, b) => b.score - a.score);
+            return sortedScores;
         }
     } catch (e) {
-        console.error("Cloud database read error:", e);
+        console.error("Google Sheets read error:", e);
     }
-    return getLocalScores();
+    return getScores();
 }
 
-// Keep synchronous version safe for any background calls
-function getScores() {
-    return getLocalScores();
-}
-
-// 2. Saves score to the global cloud server instantly
+// Secret background submit directly to Google Forms database without closing the game
 async function saveScore(teamName, score) {
-    let scores = await fetchScoresFromServer();
-    
-    let existing = scores.find(t => t.teamName.toLowerCase() === teamName.toLowerCase());
-    if (existing) {
-        existing.score = Math.max(existing.score, score);
-    } else {
-        scores.push({ teamName, score });
-    }
-    
-    scores.sort((a, b) => b.score - a.score);
-    if (scores.length > 15) scores = scores.slice(0, 15);
+    let localScores = getScores();
+    localScores.push({ teamName, score });
+    localStorage.setItem("teamScores", JSON.stringify(localScores));
 
-    // Save locally as backup
-    localStorage.setItem("teamScores", JSON.stringify(scores));
+    let submitUrl = `https://docs.google.com/forms/d/e/${FORM_ID}/formResponse`;
+    let formData = new URLSearchParams();
+    formData.append(ENTRY_NAME, teamName);
+    formData.append(ENTRY_SCORE, score);
 
-    // Force push to public cloud server using URLSearchParams (Form Data)
     try {
-        let formData = new URLSearchParams();
-        formData.append("text", JSON.stringify(scores));
-
-        await fetch(SAVE_URL, {
+        await fetch(submitUrl, {
             method: "POST",
+            mode: "no-cors",
             body: formData,
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
         });
-        console.log("Global cloud leaderboard synced successfully!");
+        console.log("Score safely archived in Google Cloud database.");
     } catch (e) {
-        console.error("Cloud database write error:", e);
+        console.error("Google Form background dispatch dropped:", e);
     }
 }
 
 function clearScores() {
     localStorage.removeItem("teamScores");
-    let formData = new URLSearchParams();
-    formData.append("text", JSON.stringify([]));
-    fetch(SAVE_URL, { method: "POST", body: formData }).catch(e => console.error(e));
+    alert("To reset the leaderboard, simply clear the rows inside your linked Google Sheet browser window directly!");
 }
